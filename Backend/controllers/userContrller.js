@@ -1,4 +1,6 @@
+const { reset } = require("nodemon");
 const User = require("../models/userModels");
+const sendToken = require("../utils/jwtToken"); // A FUNCITON FOR SENDING TOKEN AND STORING IT IN BROWSER COOKIE
 
 // REGISTER A USER
 
@@ -16,14 +18,16 @@ exports.registerUser = async (req, res) => {
       },
     });
 
-    const token = user.getJWTToken();
+    // const token = user.getJWTToken();
 
-    res.status(201).json({
-      success: true,
-      user,
-      token,
-      message: "the user created succesfully and token generated succesfully",
-    });
+    // res.status(201).json({
+    //   success: true,
+    //   user,
+    //   token,
+    //   message: "the user created succesfully and token generated succesfully",
+    // });
+
+    sendToken(user, 201, res);
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -70,13 +74,38 @@ exports.loginUser = async (req, res) => {
 
     // Generate JWT token for the logged in user
 
-    const token = user.getJWTToken(); // this method already present in database and we just using it
+    // const token = user.getJWTToken(); // this method already present in database and we just using it
 
-    res.status(200).json({
+    // res.status(200).json({
+    //   success: true,
+    //   user,
+    //   token,
+    //   message: "userr logged in succesful",
+    // });
+
+    sendToken(user, 200, res);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error,
+      message: "user cannot be logged in",
+    });
+  }
+};
+
+//LOGOUT THE USER
+
+exports.logoutUser = async (req, res) => {
+  // we are taking token null and expires time is current date & time
+  try {
+    res.cookie("token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+
+    res.status(201).json({
       success: true,
-      user,
-      token,
-      message: "userr logged in succesful",
+      message: "loged out succesfully",
     });
   } catch (error) {
     res.status(500).json({
