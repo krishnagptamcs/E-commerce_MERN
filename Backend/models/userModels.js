@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpire: Date,
 });
 
-// BCRYPTING THE PASSWORD {pre--> to saving the document in mongodb before}
+// BCRYPTING THE PASSWORD***** {pre--> to saving the document in mongodb before}
 
 userSchema.pre("save", async function (next) {
   // APPLYING THE CONDITION WHEN WE HAVE TO BCRYPT
@@ -51,12 +51,18 @@ userSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, 10);
 });
 
-// JWT TOKEN , TO LOGIN JSUT AFTER REGISTER OR OTHER CASE ALSO TO STORING THE TOKEN IN COOKIES FOR A PARTICULAR USER
+// JWT TOKEN***** , TO LOGIN JSUT AFTER REGISTER OR OTHER CASE ALSO TO STORING THE TOKEN IN COOKIES FOR A PARTICULAR USER
 
 userSchema.methods.getJWTToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
   });
+};
+
+// COMPARING PASSWORDS*****
+
+userSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password); // return T/F
 };
 
 module.exports = mongoose.model("User", userSchema);
