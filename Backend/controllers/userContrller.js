@@ -1,5 +1,6 @@
 const User = require("../models/userModels");
 const sendToken = require("../utils/jwtToken"); // A FUNCITON FOR SENDING TOKEN AND STORING IT IN BROWSER COOKIE
+const sendEmail = require("../utils/nodeMailer");
 
 // REGISTER A USER
 
@@ -115,7 +116,7 @@ exports.logoutUser = async (req, res) => {
   }
 };
 
-// RESET PASSWORD
+// FORGOT PASSWORD
 
 exports.forgotPassword = async (req, res) => {
   try {
@@ -132,46 +133,86 @@ exports.forgotPassword = async (req, res) => {
 
     await user.save({ validateBeforeSave: false });
 
-    const resetPasswordUrl = `${req.protocol}://${req.get("host")}/api/v1/password/reset/${resetToken}`; // url to send with email to particular user 
+    const resetPasswordUrl = `${req.protocol}://${req.get(
+      "host"
+    )}/api/v1/password/reset/${resetToken}`; // url to send with email to particular user
 
     const message = `Your password reset token is :- \n\n ${resetPasswordUrl} \n\nIf you have not requested this email then, please ignore it.`;
 
-
-    // SENDING PASSWORD RESET MAIL TO USER 
+    // SENDING PASSWORD RESET MAIL TO USER
     try {
-        await sendEmail({
-          email: user.email,
-          subject: `Ecommerce Password Recovery`,
-          message,
-        });
-    
-        res.status(200).json({
-          success: true,
-          message: `Email sent to ${user.email} successfully`,
-        });
-      } catch (error) {
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpire = undefined;
-    
-        await user.save({ validateBeforeSave: false });
-    
-        return res.status(500).json({
-            success: false,
-            error: error,
-            message: "password reset mail sent  failedd",
-          }); ;
-      }
+      await sendEmail({
+        email: user.email,
+        subject: `Ecommerce Password Recovery`,
+        message,
+      });
 
+      res.status(200).json({
+        success: true,
+        message: `Email sent to ${user.email} successfully`,
+      });
+    } catch (error) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
 
+      await user.save({ validateBeforeSave: false });
+      console.log("the error coming is ", error);
 
-
-  } catch (error) {
-    res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: error,
-        message: "password reste failedd",
+        message: "password reset mail sent  failedd",
       });
-    
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error,
+      message: "forgot password process failed ",
+    });
+  }
+};
 
+// RESET PASSWORD
+exports.resetPassword = async (req, res, next) => {
+  try {
+    // creating token hash
+    const resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(req.params.token) // fething the token from url
+      .digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(501).json({
+        success: false,
+        message: "the token is expire , pls try again",
+      });
+    }
+
+    if (req.body.password !== req.body.confirmPassword) {
+      return res.status(502).json({
+        success: false,
+        message: "current password and confirm  password does'nt match ",
+      });
+    }
+
+    user.password = req.body.password; // updating the user password with new one
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save(); // saving the user in db
+
+    sendToken(user, 200, res); // sending the token to browser cookie for auto login
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      error: error,
+      message: "password reset  failedd",
+    });
   }
 };
