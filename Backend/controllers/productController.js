@@ -1,4 +1,5 @@
 const Product = require("../models/productModels");
+const APIfeatures = require("../utils/APIfeatures");
 
 //CREATE A NEW PRODUCTS
 exports.createProduct = async (req, res, next) => {
@@ -47,10 +48,17 @@ exports.updateProduct = async (req, res, next) => {
 // GET ALL PRODUCTS
 exports.getAllProduct = async (req, res) => {
   try {
-    const allProducts = await Product.find({});
+    const resultPerPage = 5;
+    const productCount = await Product.countDocuments();
+    const apiFeatures = new APIfeatures(Product.find(), req.query)
+      .search()
+      .filter()
+      .pagination(resultPerPage);
+    const allProducts = await apiFeatures.query;
     res.status(200).json({
       success: "true",
       allProducts,
+      productCount,
       message: "all products fetch succesfully",
     });
   } catch (error) {
@@ -76,6 +84,7 @@ exports.productDetails = async (req, res) => {
     res.status(200).json({
       success: true,
       product,
+
       message: "products details fetch succesfully od particular id",
     });
   } catch (error) {
