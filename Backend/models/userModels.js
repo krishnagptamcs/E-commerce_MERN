@@ -68,10 +68,10 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 
 // GENERATING RESET PASSWORD TOKEN
 
-userSchema.models.getResetPasswordToken = function () {
+userSchema.methods.getResetPasswordToken = function () {
   const resetToken = crypto.randomBytes(20).toString("hex"); // generating the token
 
-  this.resetPasswordToken = crypto
+  this.resetPasswordToken = crypto 
     .createHash("sha256")
     .update(resetToken)
     .digest("hex"); // adding the generated token to user model data

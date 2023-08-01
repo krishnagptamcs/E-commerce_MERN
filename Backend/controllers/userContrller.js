@@ -1,4 +1,3 @@
-const { reset } = require("nodemon");
 const User = require("../models/userModels");
 const sendToken = require("../utils/jwtToken"); // A FUNCITON FOR SENDING TOKEN AND STORING IT IN BROWSER COOKIE
 
@@ -113,5 +112,66 @@ exports.logoutUser = async (req, res) => {
       error: error,
       message: "user cannot be logged in",
     });
+  }
+};
+
+// RESET PASSWORD
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user) {
+      return res.status(403).json({
+        success: false,
+        message: "Enter valid email id",
+      });
+    }
+
+    const resetToken = user.getResetPasswordToken();
+
+    await user.save({ validateBeforeSave: false });
+
+    const resetPasswordUrl = `${req.protocol}://${req.get("host")}/api/v1/password/reset/${resetToken}`; // url to send with email to particular user 
+
+    const message = `Your password reset token is :- \n\n ${resetPasswordUrl} \n\nIf you have not requested this email then, please ignore it.`;
+
+
+    // SENDING PASSWORD RESET MAIL TO USER 
+    try {
+        await sendEmail({
+          email: user.email,
+          subject: `Ecommerce Password Recovery`,
+          message,
+        });
+    
+        res.status(200).json({
+          success: true,
+          message: `Email sent to ${user.email} successfully`,
+        });
+      } catch (error) {
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+    
+        await user.save({ validateBeforeSave: false });
+    
+        return res.status(500).json({
+            success: false,
+            error: error,
+            message: "password reset mail sent  failedd",
+          }); ;
+      }
+
+
+
+
+  } catch (error) {
+    res.status(500).json({
+        success: false,
+        error: error,
+        message: "password reste failedd",
+      });
+    
+
   }
 };
