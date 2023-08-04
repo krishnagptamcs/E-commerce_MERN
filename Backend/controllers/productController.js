@@ -92,7 +92,7 @@ exports.productDetails = async (req, res) => {
   }
 };
 
-// DELET ALL PRODUCTS
+// DELETE PRODUCTS
 
 exports.deleteProducts = async (req, res) => {
   try {

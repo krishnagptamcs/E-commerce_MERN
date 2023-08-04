@@ -1,8 +1,8 @@
-//AUTHORISE USER
+
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModels");
 
-// AUTHORISED USER
+// AUTHORISED USER ** SENDING THE TOKEN 
 
 exports.isAuthUser = async (req, res, next) => {
   try {
@@ -19,7 +19,7 @@ exports.isAuthUser = async (req, res, next) => {
 
     const decodedUser = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = await User.findById(decodedUser.id);
+    req.user = await User.findById(decodedUser.id); // AFTER VERIFYING THE JWT TOKEN WE ARE PASSING THE ID TO REQ.USER, THAT MEANS AFTER LOGIN IN THE DETAILS OF USER DATA IS IN  REQ.USER
 
     next();
   } catch (error) {

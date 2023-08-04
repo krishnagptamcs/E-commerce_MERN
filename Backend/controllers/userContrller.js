@@ -216,3 +216,26 @@ exports.resetPassword = async (req, res, next) => {
     });
   }
 };
+
+// GET USER DETAILS
+
+exports.getUserDetails = async (req, res) => {
+  try {
+    // after login the user details is send to req.user
+    const user = await User.findById(req.user.id);
+
+    res.status(200).json({
+      sucess: true,
+      data: user,
+      message: "user data ftech succesfully",
+    });
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      error: error,
+      message: "unable to fetch user data ",
+    });
+  }
+};
+
+//UPDATE PASSWORD
